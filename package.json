@@ -4,9 +4,11 @@
   "main": "server/index.js",
   "type": "module",
   "scripts": {
-    "start": "node server/index",
-    "dev:server": "nodemon server/index",
-    "seeders": "node server/seeders/index.js"
+    "start": "node server/index.js",
+    "dev:server": "nodemon server/index.js",
+    "seeders": "node server/seeders/index.js",
+    "dev:client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\""
   },
   "keywords": [],
   "author": "",
@@ -14,6 +16,7 @@
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "concurrently": "^9.2.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
@@ -21,5 +24,8 @@
     "express-async-handler": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }

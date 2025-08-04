@@ -27,13 +27,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve static files from uploads directory
-app.use("/uploads", express.static("uploads"));
-
 // Routes
 app.use("/api/v1", healthRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
+
+// Serve React app in production
+if (process.env.NODE_ENV === "production") {
+  // Serve static files from React build
+  app.use(express.static(path.join(__dirname, "public")));
+
+  // Handle React routing - send all non-API requests to React
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+  });
+}
 
 // Application Error Handlers
 app.use(notFound);
