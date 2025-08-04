@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node server/index",
-    "dev:server": "nodemon server/index"
+    "dev:server": "nodemon server/index",
+    "seeders": "node server/seeders/index.js"
   },
   "keywords": [],
   "author": "",

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import asyncHandler from "express-async-handler";
+
 import config from "./index.js";
 
 const connectDB = asyncHandler(async () => {

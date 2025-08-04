@@ -1,4 +1,6 @@
 import express from "express";
+
+import { protect } from "../middleware/auth.middleware.js";
 import {
   registerUser,
   loginUser,
@@ -32,7 +34,7 @@ authRouter.post("/login", loginUser);
  * @route   POST /api/v1/auth/logout
  * @access  Private
  */
-authRouter.post("/logout", logoutUser);
+authRouter.post("/logout", protect, logoutUser);
 
 /**
  * @desc    Google sign-in/token handling
@@ -46,7 +48,7 @@ authRouter.post("/google", googleAuth);
  * @route   GET /api/v1/auth/me
  * @access  Private
  */
-authRouter.get("/me", getCurrentUser);
+authRouter.get("/me", protect, getCurrentUser);
 
 /**
  * @desc    Issue new access token using refresh token
