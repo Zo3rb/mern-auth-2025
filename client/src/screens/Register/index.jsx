@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router"; // Fixed import
+import { Link, useNavigate } from "react-router";
+import { useDispatch } from "react-redux";
+
 import CustomInput from "../../components/CustomInput";
+import { useRegisterUserMutation } from "../../redux/slicers/apiSlice";
+import { setCredentials } from "../../redux/slicers/authSlice";
 
 import "./Register.css";
 
