@@ -9,13 +9,28 @@
     "seeders": "node server/seeders/index.js",
     "dev:client": "npm run dev --prefix client",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "install": "npm install && npm run install --prefix client",
-    "build": "npm run build --prefix client"
+    "install:all": "npm install && npm install --prefix client",
+    "install:client": "npm install --prefix client",
+    "install:server": "npm install",
+    "build:client": "npm run build --prefix client",
+    "build": "npm run install:all && npm run build:client",
+    "start:prod": "npm run build && npm start",
+    "clean": "rm -rf client/dist && rm -rf node_modules && rm -rf client/node_modules"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "mern",
+    "authentication",
+    "react",
+    "express",
+    "mongodb"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "description": "MERN Authentication Boilerplate with JWT",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "concurrently": "^9.2.0",
