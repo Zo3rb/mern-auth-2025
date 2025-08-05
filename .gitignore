@@ -94,6 +94,6 @@ tmp/
 temp/
 
 # Seeders folder
-/seeders/
+seeders/
 server/seeders/
 client/seeders/
