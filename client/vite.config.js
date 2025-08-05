@@ -1,25 +1,42 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000, // Frontend runs on port 3000
+    port: 3000,
     proxy: {
       "/api": {
-        target: "http://localhost:5000", // Your Express server
+        target: "http://localhost:5000",
         changeOrigin: true,
         secure: false,
       },
       "/uploads": {
-        target: "http://localhost:5000", // For static files (avatars)
+        target: "http://localhost:5000",
         changeOrigin: true,
         secure: false,
       },
     },
   },
   build: {
-    outDir: "../server/public", // Build to server's public folder
+    outDir: "dist", // ✅ Build to local dist folder (not ../server/public)
+    emptyOutDir: true,
+    assetsDir: "assets",
+    sourcemap: false,
+    minify: "terser",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          router: ["react-router-dom"],
+          redux: ["@reduxjs/toolkit", "react-redux", "redux-persist"],
+        },
+      },
+    },
+  },
+  define: {
+    "process.env.NODE_ENV": JSON.stringify(
+      import.meta.env.MODE || "development"
+    ),
   },
 });

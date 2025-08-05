@@ -1,36 +1,96 @@
 {
   "name": "mern-auth-bp",
   "version": "1.0.0",
+  "description": "MERN Authentication Boilerplate with JWT - A complete, production-ready authentication system",
   "main": "server/index.js",
   "type": "module",
   "scripts": {
     "start": "node server/index.js",
-    "dev:server": "nodemon server/index.js",
-    "seeders": "node server/seeders/index.js",
-    "dev:client": "npm run dev --prefix client",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "nodemon server/index.js",
+    "dev:client": "npm run dev --prefix client",
+    "build": "npm run install:all && npm run build:client",
+    "build:client": "npm run build --prefix client",
+    "build:prod": "NODE_ENV=production npm run build",
+    "start:prod": "NODE_ENV=production npm start",
     "install:all": "npm install && npm install --prefix client",
     "install:client": "npm install --prefix client",
     "install:server": "npm install",
-    "build:client": "npm run build --prefix client",
-    "build": "npm run install:all && npm run build:client",
-    "start:prod": "npm run build && npm start",
-    "clean": "rm -rf client/dist && rm -rf node_modules && rm -rf client/node_modules"
+    "clean": "npm run clean:deps && npm run clean:build",
+    "clean:deps": "rm -rf node_modules && rm -rf client/node_modules",
+    "clean:build": "rm -rf client/dist",
+    "clean:all": "npm run clean:deps && npm run clean:build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:server": "cd server && npm test",
+    "test:client": "cd client && npm test",
+    "lint": "npm run lint:server && npm run lint:client",
+    "lint:server": "cd server && npm run lint",
+    "lint:client": "cd client && npm run lint",
+    "lint:fix": "npm run lint:fix:server && npm run lint:fix:client",
+    "lint:fix:server": "cd server && npm run lint:fix",
+    "lint:fix:client": "cd client && npm run lint:fix",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "health": "curl -f http://localhost:5000/api/v1/health || exit 1",
+    "seed": "node server/seeders/index.js",
+    "db:migrate": "node server/migrations/index.js",
+    "db:reset": "node server/scripts/resetDatabase.js",
+    "logs": "tail -f logs/app.log",
+    "docker:build": "docker build -t mern-auth-bp .",
+    "docker:run": "docker run -p 5000:5000 --env-file .env mern-auth-bp",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up",
+    "heroku-postbuild": "npm run build",
+    "vercel-build": "npm run build",
+    "railway-build": "npm run build",
+    "render-build": "npm run build"
   },
+  "keywords": [
+    "mern",
+    "mongodb",
+    "express",
+    "react",
+    "nodejs",
+    "authentication",
+    "jwt",
+    "redux",
+    "boilerplate",
+    "starter",
+    "template",
+    "fullstack",
+    "javascript",
+    "es6",
+    "rest-api",
+    "spa",
+    "responsive",
+    "cors",
+    "bcrypt",
+    "cookie-parser",
+    "dotenv",
+    "vite"
+  ],
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com",
+    "url": "https://github.com/yourusername"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/mern-auth-bp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/mern-auth-bp/issues"
+  },
+  "homepage": "https://github.com/yourusername/mern-auth-bp#readme",
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=8.0.0"
   },
-  "keywords": [
-    "mern",
-    "authentication",
-    "react",
-    "express",
-    "mongodb"
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
   ],
-  "author": "Your Name",
-  "license": "MIT",
-  "description": "MERN Authentication Boilerplate with JWT",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "concurrently": "^9.2.0",
@@ -39,11 +99,36 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "express-async-handler": "^1.2.0",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.0",
-    "multer": "^2.0.2"
+    "morgan": "^1.10.0",
+    "multer": "^2.0.2",
+    "validator": "^13.11.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "prettier": "^3.1.0",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-node": "^11.1.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "packageManager": "npm@9.8.1",
+  "volta": {
+    "node": "18.18.2",
+    "npm": "9.8.1"
   }
 }

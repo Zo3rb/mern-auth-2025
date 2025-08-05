@@ -1,81 +1,127 @@
 import express from "express";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
-import cors from "cors";
+import config from "./config/index.js";
 
-// Importing Routes.
-import healthRouter from "./routes/health.route.js";
-import authRouter from "./routes/auth.route.js";
-import userRouter from "./routes/users.route.js";
+// Import routes
+import authRoutes from "./routes/auth.route.js";
+import healthRoutes from "./routes/health.route.js";
 
-import {
-  notFound,
-  errorHandler,
-} from "./middleware/errorHandler.middleware.js";
-
-const app = express();
-
-// Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// CORS Configuration - MOVE THIS UP
+const app = express();
+
+// Trust proxy for deployment platforms
+app.set("trust proxy", 1);
+
+// Dynamic CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (mobile apps, postman, etc.)
     if (!origin) return callback(null, true);
 
     const allowedOrigins = [
       "http://localhost:3000",
-      "http://localhost:5173",
-      "http://127.0.0.1:3000",
-      "http://127.0.0.1:5173",
+      "http://localhost:5173", // Vite dev server
+      "http://localhost:5000",
+      config.clientUrl,
+      process.env.CLIENT_URL,
       process.env.FRONTEND_URL,
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+      process.env.RAILWAY_STATIC_URL
+        ? `https://${process.env.RAILWAY_STATIC_URL}`
+        : null,
+      process.env.RENDER_EXTERNAL_URL,
     ].filter(Boolean);
 
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Add common deployment patterns
+    if (
+      origin.includes("vercel.app") ||
+      origin.includes("railway.app") ||
+      origin.includes("render.com") ||
+      origin.includes("herokuapp.com") ||
+      origin.includes("netlify.app")
+    ) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log(`❌ CORS blocked origin: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-    "Accept",
-    "Origin",
-  ],
   optionsSuccessStatus: 200,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
 
-// MIDDLEWARE - CORRECT ORDER
-app.use(cors(corsOptions)); // CORS FIRST
-app.use(express.json({ limit: "10mb" })); // JSON parsing
-app.use(express.urlencoded({ extended: true, limit: "10mb" })); // URL encoding
-app.use(cookieParser()); // Cookie parsing
+// Middleware
+app.use(cors(corsOptions));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(cookieParser());
 
-// Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Security headers
+app.use((req, res, next) => {
+  res.header("X-Content-Type-Options", "nosniff");
+  res.header("X-Frame-Options", "DENY");
+  res.header("X-XSS-Protection", "1; mode=block");
+  next();
+});
 
-// Routes - AFTER middleware setup
-app.use("/api/v1", healthRouter);
-app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/users", userRouter);
+// API routes
+app.use("/api/v1/health", healthRoutes);
+app.use("/api/v1/auth", authRoutes);
 
-// Serve React app in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "public")));
+// Serve static files in production
+if (config.nodeEnv === "production") {
+  const clientDistPath = path.join(__dirname, "../client/dist");
+
+  // Serve static files
+  app.use(express.static(clientDistPath));
+
+  // API fallback
+  app.get("/api/*", (req, res) => {
+    res.status(404).json({
+      success: false,
+      error: "API endpoint not found",
+    });
+  });
+
+  // Handle React routing - send all non-API requests to React app
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+    res.sendFile(path.join(clientDistPath, "index.html"));
+  });
+} else {
+  app.get("/", (req, res) => {
+    res.json({
+      message: "🚀 MERN Auth API is running",
+      version: "1.0.0",
+      environment: config.nodeEnv,
+      endpoints: {
+        health: "/api/v1/health",
+        auth: "/api/v1/auth",
+      },
+    });
   });
 }
 
-// Application Error Handlers - LAST
-app.use(notFound);
-app.use(errorHandler);
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Global Error:", err);
+
+  res.status(err.status || 500).json({
+    success: false,
+    error:
+      config.nodeEnv === "production" ? "Something went wrong!" : err.message,
+    ...(config.nodeEnv === "development" && { stack: err.stack }),
+  });
+});
 
 export default app;
