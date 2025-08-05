@@ -8,7 +8,9 @@
     "dev:server": "nodemon server/index.js",
     "seeders": "node server/seeders/index.js",
     "dev:client": "npm run dev --prefix client",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\""
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "install": "npm install && npm run install --prefix client",
+    "build": "npm run build --prefix client"
   },
   "keywords": [],
   "author": "",
