@@ -1,0 +1,217 @@
+.custom-input-group {
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.custom-input-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+
+.required {
+  color: #e74c3c;
+  margin-left: 2px;
+}
+
+.custom-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.custom-input-wrapper.error {
+  border-color: #e74c3c;
+}
+
+.custom-input-wrapper.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Input Icon */
+.input-icon {
+  position: absolute;
+  left: 1rem;
+  z-index: 2;
+  color: #666;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+/* Main Input */
+.custom-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+  background-color: #fff;
+  color: #333;
+}
+
+.custom-input.has-icon {
+  padding-left: 3rem;
+}
+
+.custom-input.has-toggle {
+  padding-right: 3rem;
+}
+
+.custom-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.custom-input::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+.custom-input:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Error State */
+.custom-input-wrapper.error .custom-input {
+  border-color: #e74c3c;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+.custom-input-wrapper.error .input-icon {
+  color: #e74c3c;
+}
+
+/* Password Toggle */
+.password-toggle {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: color 0.2s ease;
+}
+
+.password-toggle:hover {
+  color: #333;
+}
+
+.password-toggle:focus {
+  outline: none;
+  color: #667eea;
+}
+
+/* File Input */
+.file-input-container {
+  width: 100%;
+  border: 2px dashed #e1e5e9;
+  border-radius: 8px;
+  padding: 2rem 1rem;
+  text-align: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background-color: #fafbfc;
+}
+
+.file-input-container:hover {
+  border-color: #667eea;
+  background-color: #f8f9ff;
+}
+
+.file-input-container.drag-over {
+  border-color: #667eea;
+  background-color: #f0f4ff;
+  transform: scale(1.02);
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.file-input-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.file-text {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.file-subtext {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* Error Message */
+.error-message {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #e74c3c;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .custom-input {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  .custom-input.has-icon {
+    padding-left: 2.75rem;
+  }
+
+  .custom-input.has-toggle {
+    padding-right: 2.75rem;
+  }
+
+  .input-icon {
+    left: 0.875rem;
+  }
+
+  .password-toggle {
+    right: 0.875rem;
+  }
+
+  .file-input-container {
+    padding: 1.5rem 0.75rem;
+  }
+}
+
+/* Focus States for Accessibility */
+.custom-input:focus,
+.file-input-label:focus-within {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Animation for smooth transitions */
+.custom-input-wrapper {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.file-input-container {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}

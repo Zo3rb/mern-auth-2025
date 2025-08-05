@@ -4,7 +4,7 @@
 
 /* Features Section */
 .features {
-  padding: 0.5rem 0 1rem 0;
+  padding: 1rem;
   background-color: #f8f9fa;
 }
 
@@ -15,6 +15,7 @@
 
 .features h2 {
   text-align: center;
+  margin-top: 1rem;
   margin-bottom: 3rem;
   font-size: 2.5rem;
   color: #333;
