@@ -1,13 +1,27 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router"; // Using the correct import
+import { Link, useNavigate, useLocation } from "react-router";
+import { useDispatch } from "react-redux";
+
 import CustomInput from "../../components/CustomInput";
+import { useLoginUserMutation } from "../../redux/slicers/apiSlice";
+import { setCredentials } from "../../redux/slicers/authSlice";
+import { authToast } from "../../utils/toast";
 
 import "./Login.css";
 
 const Login = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
+
+  // RTK Query mutation hook
+  const [loginUser, { isLoading, error: apiError }] = useLoginUserMutation();
+
   const [submitMessage, setSubmitMessage] = useState("");
+
+  // Get the redirect path from location state (for protected routes)
+  const from = location.state?.from || "/dashboard";
 
   const {
     register,
@@ -17,7 +31,7 @@ const Login = () => {
     setValue,
     trigger,
   } = useForm({
-    mode: "onChange", // Real-time validation
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -46,36 +60,53 @@ const Login = () => {
   React.useEffect(() => {
     register("email", validationRules.email);
     register("password", validationRules.password);
-  }, [register]);
+  }, [register, validationRules.email, validationRules.password]);
 
-  // Handle form submission
+  // Handle form submission with Redux integration
   const onSubmit = async (data) => {
-    setIsSubmitting(true);
     setSubmitMessage("");
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Log form data
-      console.log("Login Data:", {
-        email: data.email,
-        password: data.password,
-      });
-
-      setSubmitMessage("Login successful! Redirecting to dashboard...");
-
-      // TODO: Redirect to dashboard after successful login
-      // setTimeout(() => {
-      //   navigate("/dashboard");
-      // }, 1000);
-    } catch (error) {
-      console.error("Login error:", error);
-      setSubmitMessage(
-        "Login failed. Please check your credentials and try again."
+      // Use promise-based toast for login
+      const result = await authToast.loginPromise(
+        loginUser(data).unwrap(),
+        data.email // We'll extract username from result
       );
-    } finally {
-      setIsSubmitting(false);
+
+      console.log("✅ Login successful:", result);
+
+      // Set credentials in Redux state
+      dispatch(
+        setCredentials({
+          user: result.user,
+          token: result.token,
+          refreshToken: result.refreshToken,
+        })
+      );
+
+      // Set success message
+      setSubmitMessage("🎉 Login successful! Redirecting...");
+
+      // Redirect to intended destination or dashboard
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 1500);
+    } catch (error) {
+      console.error("❌ Login error:", error);
+
+      // Extract error message from different possible structures
+      let errorMessage = "Login failed. Please check your credentials.";
+
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      }
+
+      // Set error message
+      setSubmitMessage(errorMessage);
     }
   };
 
@@ -102,6 +133,11 @@ const Login = () => {
           <div className="login-header">
             <h1>Welcome Back</h1>
             <p>Sign in to your account to continue</p>
+            {from !== "/dashboard" && (
+              <p className="redirect-notice">
+                You'll be redirected to <strong>{from}</strong> after login
+              </p>
+            )}
           </div>
 
           <form
@@ -163,9 +199,9 @@ const Login = () => {
             <button
               type="submit"
               className={`submit-btn ${isValid ? "valid" : "invalid"}`}
-              disabled={isSubmitting}
+              disabled={isLoading}
             >
-              {isSubmitting ? (
+              {isLoading ? (
                 <>
                   <div className="loading-spinner"></div>
                   Signing In...
@@ -176,13 +212,15 @@ const Login = () => {
             </button>
 
             {/* Submit Message */}
-            {submitMessage && (
+            {(submitMessage || apiError) && (
               <div
                 className={`submit-message ${
                   submitMessage.includes("successful") ? "success" : "error"
                 }`}
               >
-                {submitMessage}
+                {submitMessage ||
+                  apiError?.data?.message ||
+                  "An error occurred"}
               </div>
             )}
           </form>
@@ -193,7 +231,7 @@ const Login = () => {
               <span>or continue with</span>
             </div>
             <div className="social-buttons">
-              <button className="social-btn google-btn">
+              <button className="social-btn google-btn" type="button">
                 <svg width="20" height="20" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
@@ -214,7 +252,7 @@ const Login = () => {
                 </svg>
                 Google
               </button>
-              <button className="social-btn github-btn">
+              <button className="social-btn github-btn" type="button">
                 <svg
                   width="20"
                   height="20"

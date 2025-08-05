@@ -1,134 +1,86 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-// Helper functions for localStorage
-const loadUserFromStorage = () => {
-  try {
-    const serializedUser = localStorage.getItem("userInfo");
-    return serializedUser ? JSON.parse(serializedUser) : null;
-  } catch (error) {
-    console.error("Error loading user from localStorage:", error);
-    return null;
-  }
-};
-
-const saveUserToStorage = (user) => {
-  try {
-    const serializedUser = JSON.stringify(user);
-    localStorage.setItem("userInfo", serializedUser);
-  } catch (error) {
-    console.error("Error saving user to localStorage:", error);
-  }
-};
-
-const removeUserFromStorage = () => {
-  try {
-    localStorage.removeItem("userInfo");
-  } catch (error) {
-    console.error("Error removing user from localStorage:", error);
-  }
-};
-
 // Initial state
 const initialState = {
-  userInfo: loadUserFromStorage(), // Load from localStorage on app start
-  isAuthenticated: !!loadUserFromStorage(), // True if user exists in localStorage
-  isInitialized: false, // Track if auth has been initialized
-  token: localStorage.getItem("token") || null,
-  refreshToken: localStorage.getItem("refreshToken") || null,
+  user: null,
+  token: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  isLoading: false,
 };
 
-// Create the auth slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    // Set user credentials (when login/register is successful)
     setCredentials: (state, action) => {
       const { user, token, refreshToken } = action.payload;
-
-      state.userInfo = user;
+      state.user = user;
+      state.token = token;
+      state.refreshToken = refreshToken;
       state.isAuthenticated = true;
-      state.isInitialized = true;
+      state.isLoading = false;
 
-      // Save tokens if provided
-      if (token) {
-        state.token = token;
-        localStorage.setItem("token", token);
-      }
-
-      if (refreshToken) {
-        state.refreshToken = refreshToken;
-        localStorage.setItem("refreshToken", refreshToken);
-      }
-
-      // Save user to localStorage
-      saveUserToStorage(user);
+      console.log("✅ Credentials set:", {
+        user: user?.username,
+        hasToken: !!token,
+      });
     },
-
-    // Clear user credentials (when logout or auth fails)
     clearCredentials: (state) => {
-      state.userInfo = null;
-      state.isAuthenticated = false;
+      state.user = null;
       state.token = null;
       state.refreshToken = null;
+      state.isAuthenticated = false;
+      state.isLoading = false;
 
-      // Clear localStorage
-      removeUserFromStorage();
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
+      console.log("🚪 Credentials cleared");
     },
-
-    // Set initialization flag
-    setInitialized: (state) => {
-      state.isInitialized = true;
+    setLoading: (state, action) => {
+      state.isLoading = action.payload;
     },
-
-    // Update tokens
-    updateTokens: (state, action) => {
-      const { token, refreshToken } = action.payload;
-
-      if (token) {
+    // Handle rehydration from localStorage
+    rehydrateAuth: (state, action) => {
+      const { user, token, refreshToken } = action.payload || {};
+      if (user && token) {
+        state.user = user;
         state.token = token;
-        localStorage.setItem("token", token);
-      }
-
-      if (refreshToken) {
         state.refreshToken = refreshToken;
-        localStorage.setItem("refreshToken", refreshToken);
+        state.isAuthenticated = true;
+        state.isLoading = false;
+
+        console.log("🔄 Auth rehydrated from storage:", {
+          user: user?.username,
+        });
       }
     },
+  },
+  // Handle redux-persist rehydration
+  extraReducers: (builder) => {
+    builder.addCase("persist/REHYDRATE", (state, action) => {
+      const persistedState = action.payload?.auth;
+      if (persistedState?.user && persistedState?.token) {
+        state.user = persistedState.user;
+        state.token = persistedState.token;
+        state.refreshToken = persistedState.refreshToken;
+        state.isAuthenticated = true;
+        state.isLoading = false;
 
-    // Reset entire auth state
-    resetAuth: (state) => {
-      state.userInfo = null;
-      state.isAuthenticated = false;
-      state.isInitialized = false;
-      state.token = null;
-      state.refreshToken = null;
-
-      // Clear localStorage
-      removeUserFromStorage();
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
-    },
+        console.log("🔄 Redux Persist rehydrated auth:", {
+          user: persistedState.user?.username,
+          hasToken: !!persistedState.token,
+        });
+      }
+    });
   },
 });
 
-// Export actions for use in components
-export const {
-  setCredentials,
-  clearCredentials,
-  setInitialized,
-  updateTokens,
-  resetAuth,
-} = authSlice.actions;
+export const { setCredentials, clearCredentials, setLoading, rehydrateAuth } =
+  authSlice.actions;
 
-// Selectors for easy state access
-export const selectCurrentUser = (state) => state.auth.userInfo;
+// Selectors
+export const selectCurrentUser = (state) => state.auth.user;
+export const selectCurrentToken = (state) => state.auth.token;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
-export const selectIsInitialized = (state) => state.auth.isInitialized;
-export const selectToken = (state) => state.auth.token;
-export const selectRefreshToken = (state) => state.auth.refreshToken;
+export const selectIsLoading = (state) => state.auth.isLoading;
 
-// Export the reducer
 export default authSlice.reducer;

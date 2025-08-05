@@ -14,6 +14,12 @@ import {
 export const registerUser = asyncHandler(async (req, res) => {
   const { username, email, password, confirmPassword } = req.body;
 
+  console.log("🔍 DEBUG - Register endpoint hit");
+  console.log("📥 Headers:", req.headers);
+  console.log("📥 Body:", req.body);
+  console.log("📥 Body type:", typeof req.body);
+  console.log("📥 Body keys:", Object.keys(req.body || {}));
+
   // Check if all required fields are provided
   if (!username || !email || !password || !confirmPassword) {
     res.status(400);

@@ -4,18 +4,43 @@ import axios from "axios";
 // Custom axios base query function
 const axiosBaseQuery =
   ({ baseUrl } = { baseUrl: "" }) =>
-  async ({ url, method, data, params, headers }) => {
+  async ({ url, method, data, params, headers }, { getState }) => {
     try {
+      // Get token from persisted state
+      const token = getState()?.auth?.token;
+
+      // Add token to headers if available
+      const requestHeaders = {
+        ...headers,
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
+      console.log("🚀 API Request Details:");
+      console.log("- URL:", baseUrl + url);
+      console.log("- Method:", method);
+      console.log("- Data:", data);
+      console.log("- Headers:", requestHeaders);
+      console.log("- Has Token:", !!token);
+
       const result = await axios({
         url: baseUrl + url,
         method,
         data,
         params,
-        headers,
-        withCredentials: true, // Include cookies for authentication
+        headers: requestHeaders,
+        withCredentials: true,
       });
+
+      console.log("✅ API Response Success:", result.data);
       return { data: result.data };
     } catch (axiosError) {
+      console.error("❌ API Error:", {
+        status: axiosError.response?.status,
+        data: axiosError.response?.data,
+        message: axiosError.message,
+        url: baseUrl + url,
+      });
+
       let err = axiosError;
       return {
         error: {
@@ -26,81 +51,108 @@ const axiosBaseQuery =
     }
   };
 
-// Create the API slice
+// Create the API
 export const authApi = createApi({
-  reducerPath: "authApi", // Unique key for this API slice in the store
+  reducerPath: "authApi",
   baseQuery: axiosBaseQuery({
-    baseUrl:
-      import.meta.env.MODE === "development"
-        ? "http://localhost:5000/api/v1"
-        : "/api/v1",
+    baseUrl: import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1",
   }),
-  tagTypes: ["User"], // Cache tags for invalidation
+  tagTypes: ["User"],
   endpoints: (builder) => ({
-    // Register user endpoint
+    // Register user - Include confirmPassword
     registerUser: builder.mutation({
       query: (userData) => {
-        // Create FormData for file upload
-        const formData = new FormData();
-        formData.append("username", userData.username);
-        formData.append("email", userData.email);
-        formData.append("password", userData.password);
-        formData.append("confirmPassword", userData.confirmPassword);
+        // Only remove avatar, keep confirmPassword for backend validation
+        const { avatar, ...cleanData } = userData;
 
-        // Add avatar if provided
-        if (userData.avatar) {
-          formData.append("avatar", userData.avatar);
-        }
+        console.log("📤 Registration data being sent:", cleanData);
+        console.log(
+          "📤 Contains confirmPassword:",
+          "confirmPassword" in cleanData
+        );
 
         return {
           url: "/auth/register",
           method: "POST",
-          data: formData,
+          data: cleanData, // Includes: username, email, password, confirmPassword
           headers: {
-            "Content-Type": "multipart/form-data",
+            "Content-Type": "application/json",
           },
         };
       },
-      invalidatesTags: ["User"], // Clear user cache after registration
-    }),
-
-    // Login user endpoint
-    loginUser: builder.mutation({
-      query: (credentials) => ({
-        url: "/auth/login",
-        method: "POST",
-        data: credentials,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }),
       invalidatesTags: ["User"],
     }),
 
-    // Logout user endpoint
+    // Login user
+    loginUser: builder.mutation({
+      query: (credentials) => {
+        console.log("📤 Login credentials being sent:", {
+          email: credentials.email,
+          hasPassword: !!credentials.password,
+        });
+
+        return {
+          url: "/auth/login",
+          method: "POST",
+          data: credentials,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+      },
+      invalidatesTags: ["User"],
+    }),
+
+    // Logout user
     logoutUser: builder.mutation({
-      query: () => ({
-        url: "/auth/logout",
-        method: "POST",
-      }),
+      query: () => {
+        console.log("📤 Logout request being sent");
+
+        return {
+          url: "/auth/logout",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+      },
       invalidatesTags: ["User"],
     }),
 
     // Get current user profile
     getCurrentUser: builder.query({
-      query: () => ({
-        url: "/auth/me",
-        method: "GET",
-      }),
-      providesTags: ["User"], // Provide cache tag
+      query: () => {
+        console.log("📤 Get current user request being sent");
+
+        return {
+          url: "/auth/profile",
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+      },
+      providesTags: ["User"],
+      // Automatically refetch when user logs in
+      transformResponse: (response) => {
+        console.log("✅ Current user data received:", response);
+        return response;
+      },
+      transformErrorResponse: (response) => {
+        console.error("❌ Get current user error:", response);
+        return response;
+      },
     }),
   }),
 });
 
-// Export auto-generated hooks for components to use
+// Export hooks for components to use
 export const {
   useRegisterUserMutation,
   useLoginUserMutation,
   useLogoutUserMutation,
   useGetCurrentUserQuery,
 } = authApi;
+
+// Export the API slice itself for store configuration
+export default authApi;

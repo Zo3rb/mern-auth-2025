@@ -6,11 +6,18 @@ import { useDispatch } from "react-redux";
 import CustomInput from "../../components/CustomInput";
 import { useRegisterUserMutation } from "../../redux/slicers/apiSlice";
 import { setCredentials } from "../../redux/slicers/authSlice";
+import { authToast } from "../../utils/toast";
 
 import "./Register.css";
 
 const Register = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // RTK Query mutation hook
+  const [registerUser, { isLoading, error: apiError }] =
+    useRegisterUserMutation();
+
   const [submitMessage, setSubmitMessage] = useState("");
 
   const {
@@ -20,7 +27,7 @@ const Register = () => {
     formState: { errors, isValid, touchedFields },
     setValue,
     trigger,
-    getValues, // Add this to get current form values
+    getValues,
   } = useForm({
     mode: "onChange",
     defaultValues: {
@@ -106,38 +113,60 @@ const Register = () => {
     register("password", validationRules.password);
     register("confirmPassword", validationRules.confirmPassword);
     register("avatar", validationRules.avatar);
-  }, [register]);
+  }, [
+    register,
+    validationRules.username,
+    validationRules.email,
+    validationRules.password,
+    validationRules.confirmPassword,
+    validationRules.avatar,
+  ]);
 
-  // Handle form submission
+  // Handle form submission with Redux integration
   const onSubmit = async (data) => {
-    setIsSubmitting(true);
     setSubmitMessage("");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      console.log("Registration Data:", {
-        username: data.username,
-        email: data.email,
-        password: data.password,
-        confirmPassword: data.confirmPassword,
-        avatar: data.avatar
-          ? {
-              name: data.avatar.name,
-              size: data.avatar.size,
-              type: data.avatar.type,
-            }
-          : null,
-      });
-
-      setSubmitMessage(
-        "Registration successful! Please check your email to verify your account."
+      // Use promise-based toast that handles loading/success/error automatically
+      const result = await authToast.registerPromise(
+        registerUser(data).unwrap(),
+        data.username
       );
+
+      console.log("✅ Registration successful:", result);
+
+      // Set credentials in Redux state
+      dispatch(
+        setCredentials({
+          user: result.user,
+          token: result.token,
+          refreshToken: result.refreshToken,
+        })
+      );
+
+      // Set success message
+      setSubmitMessage("🎉 Registration successful! Welcome aboard!");
+
+      // Redirect to dashboard after 2 seconds
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 2000);
     } catch (error) {
-      console.error("Registration error:", error);
-      setSubmitMessage("Registration failed. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+      console.error("❌ Registration error:", error);
+
+      // Extract error message
+      let errorMessage = "Registration failed. Please try again.";
+
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      }
+
+      // Set error message
+      setSubmitMessage(errorMessage);
     }
   };
 
@@ -328,9 +357,9 @@ const Register = () => {
             <button
               type="submit"
               className={`submit-btn ${isValid ? "valid" : "invalid"}`}
-              disabled={isSubmitting}
+              disabled={isLoading}
             >
-              {isSubmitting ? (
+              {isLoading ? (
                 <>
                   <div className="loading-spinner"></div>
                   Creating Account...
@@ -341,13 +370,15 @@ const Register = () => {
             </button>
 
             {/* Submit Message */}
-            {submitMessage && (
+            {(submitMessage || apiError) && (
               <div
                 className={`submit-message ${
                   submitMessage.includes("successful") ? "success" : "error"
                 }`}
               >
-                {submitMessage}
+                {submitMessage ||
+                  apiError?.data?.message ||
+                  "An error occurred"}
               </div>
             )}
           </form>

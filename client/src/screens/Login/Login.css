@@ -275,6 +275,20 @@
   border-color: #333;
 }
 
+.redirect-notice {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.redirect-notice strong {
+  font-weight: 600;
+}
+
 /* Footer */
 .login-footer {
   padding: 1.5rem 2rem;
