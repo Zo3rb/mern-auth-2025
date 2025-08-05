@@ -1,6 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
 
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
+
 import Home from "./screens/Home";
 import Login from "./screens/Login";
 import Register from "./screens/Register";
@@ -15,12 +18,42 @@ function App() {
         <Route path="/" element={<Layout />}>
           {/* Public Routes */}
           <Route index element={<Home />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
 
-          {/* Protected Routes - TODO: Add protection later */}
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="profile" element={<Profile />} />
+          {/* Auth Routes - Redirect to dashboard if already authenticated */}
+          <Route
+            path="login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+
+          {/* Protected Routes - Require authentication */}
+          <Route
+            path="dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
 
           {/* 404 Page */}
           <Route path="*" element={<NotFound />} />
